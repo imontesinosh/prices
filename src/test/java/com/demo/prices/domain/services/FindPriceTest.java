@@ -1,7 +1,12 @@
 package com.demo.prices.domain.services;
 
+import com.demo.prices.domain.Brand;
 import com.demo.prices.domain.Price;
+import com.demo.prices.domain.Product;
+import com.demo.prices.domain.repository.BrandRepository;
+import com.demo.prices.domain.repository.PricesRepository;
 import com.demo.prices.domain.repository.ProductRepository;
+import com.demo.prices.domain.services.FindPriceResults.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,14 +17,21 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 
 @ExtendWith(MockitoExtension.class)
 public class FindPriceTest {
 
     public static final LocalDateTime LIVE_DATE = LocalDateTime.now();
     public static final Long PRODUCT_ID = 1L;
-    public static final Long RETAIL_CHAIN_ID = 11L;
+    public static final Long BRAND_ID = 11L;
+
+    @Mock
+    PricesRepository pricesRepository;
+    @Mock
+    BrandRepository brandRepository;
 
     @Mock
     ProductRepository productRepository;
@@ -31,14 +43,107 @@ public class FindPriceTest {
     void shouldFailWhenTheProductDoesNotExists(){
         assertThat(findPrice).isNotNull();
 
-        when(productRepository.find(PRODUCT_ID)).thenReturn(Optional.empty());
+        when(productRepository.find(eq(PRODUCT_ID))).thenReturn(Optional.empty());
 
-        FindPriceResults price = findPrice.find(LIVE_DATE, PRODUCT_ID, RETAIL_CHAIN_ID);
+        FindPriceResults result = findPrice.find(LIVE_DATE, PRODUCT_ID, BRAND_ID);
 
-        assertThat(price).isInstanceOf(ProductNotFound.class);
+        verify(productRepository).find(PRODUCT_ID);
 
-        assertThat( ((ProductNotFound)price).productId() ).isEqualTo(PRODUCT_ID);
+        assertThat(result).isInstanceOf(ProductNotFound.class);
+
+        assertThat( ((ProductNotFound)result).productId() ).isEqualTo(PRODUCT_ID);
 
     }
+
+    @Test
+    void shouldFailWhenTheBrandDoesNotExists(){
+        assertThat(findPrice).isNotNull();
+
+        when(productRepository.find(eq(PRODUCT_ID))).thenReturn(Optional.of(new Product(PRODUCT_ID)));
+        when(brandRepository.find(eq(BRAND_ID))).thenReturn(Optional.empty());
+
+        FindPriceResults result = findPrice.find(LIVE_DATE, PRODUCT_ID, BRAND_ID);
+
+        verify(productRepository).find(PRODUCT_ID);
+        verify(brandRepository).find(BRAND_ID);
+
+        assertThat(result).isInstanceOf(BrandNotFound.class);
+        assertThat( ((BrandNotFound)result).productId() ).isEqualTo(BRAND_ID);
+
+    }
+
+    @Test
+    void shouldFailWhenThereIsNoPriceForLiveDateAndProductAndBrand(){
+        assertThat(findPrice).isNotNull();
+
+        when(productRepository.find(eq(PRODUCT_ID))).thenReturn(Optional.of(new Product(PRODUCT_ID)));
+        when(brandRepository.find(eq(BRAND_ID))).thenReturn(Optional.of(new Brand(BRAND_ID)));
+        when(pricesRepository.findOneWithHighestPriority(any(LocalDateTime.class), any(Product.class), any(Brand.class))).thenReturn(Optional.empty());
+
+        FindPriceResults result = findPrice.find(LIVE_DATE, PRODUCT_ID, BRAND_ID);
+
+        verify(productRepository).find(PRODUCT_ID);
+        verify(brandRepository).find(BRAND_ID);
+        verify(pricesRepository).findOneWithHighestPriority(any(), any(), any());
+
+        assertThat(result).isInstanceOf(PriceNotFound.class);
+        assertThat( ((PriceNotFound)result).product().getId() ).isEqualTo(PRODUCT_ID);
+        assertThat( ((PriceNotFound)result).brand().getId() ).isEqualTo(BRAND_ID);
+
+    }
+
+    @Test
+    void shouldFindThePriceWhenItExists(){
+        assertThat(findPrice).isNotNull();
+
+        when(productRepository.find(eq(PRODUCT_ID))).thenReturn(Optional.of(new Product(PRODUCT_ID)));
+        when(brandRepository.find(eq(BRAND_ID))).thenReturn(Optional.of(new Brand(BRAND_ID)));
+        when(pricesRepository.findOneWithHighestPriority(any(LocalDateTime.class), any(Product.class), any(Brand.class))).thenReturn(Optional.of(new Price()));
+
+        FindPriceResults result = findPrice.find(LIVE_DATE, PRODUCT_ID, BRAND_ID);
+
+        verify(productRepository).find(PRODUCT_ID);
+        verify(brandRepository).find(BRAND_ID);
+        verify(pricesRepository).findOneWithHighestPriority(any(), any(), any());
+
+        assertThat(result).isInstanceOf(Success.class);
+
+    }
+
+    @Test
+    void shouldFailWhenFastFindDoesNotReturnResults(){
+        assertThat(findPrice).isNotNull();
+
+        when(pricesRepository.fastFindOneWithHighestPriority(any(LocalDateTime.class), any(Long.class), any(Long.class))).thenReturn(Optional.empty());
+
+        FindPriceResults result = findPrice.fastFind(LIVE_DATE, PRODUCT_ID, BRAND_ID);
+
+        verifyNoInteractions(productRepository);
+        verifyNoInteractions(brandRepository);
+        verify(pricesRepository).fastFindOneWithHighestPriority(any(), any(), any());
+
+        assertThat(result).isInstanceOf(FastPriceNotFound.class);
+        assertThat( ((FastPriceNotFound)result).liveDate() ).isEqualTo(LIVE_DATE);
+        assertThat( ((FastPriceNotFound)result).productId() ).isEqualTo(PRODUCT_ID);
+        assertThat( ((FastPriceNotFound)result).brandId() ).isEqualTo(BRAND_ID);
+
+    }
+
+    @Test
+    void shouldSucceedWhenFastSearching(){
+        assertThat(findPrice).isNotNull();
+
+        when(pricesRepository.fastFindOneWithHighestPriority(any(LocalDateTime.class), any(Long.class), any(Long.class))).thenReturn(Optional.of(new Price()));
+
+        FindPriceResults result = findPrice.fastFind(LIVE_DATE, PRODUCT_ID, BRAND_ID);
+
+        verifyNoInteractions(productRepository);
+        verifyNoInteractions(brandRepository);
+        verify(pricesRepository).fastFindOneWithHighestPriority(any(), any(), any());
+
+        assertThat(result).isInstanceOf(Success.class);
+
+    }
+
 
 }

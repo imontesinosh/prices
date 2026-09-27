@@ -1,25 +1,60 @@
 package com.demo.prices.domain.services;
 
+import com.demo.prices.domain.Brand;
 import com.demo.prices.domain.Price;
 import com.demo.prices.domain.Product;
+import com.demo.prices.domain.repository.BrandRepository;
+import com.demo.prices.domain.repository.PricesRepository;
 import com.demo.prices.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static com.demo.prices.domain.services.FindPriceResults.*;
+
 @RequiredArgsConstructor
 public class FindPrice {
 
     private final ProductRepository productRepository;
-    public FindPriceResults find(LocalDateTime liveDate, Long productId, long retailChainId) {
+    private final BrandRepository brandRepository;
+    private final PricesRepository pricesRepository;
+    public FindPriceResults find(LocalDateTime liveDate, Long productId, Long brandId) {
 
-        Optional<Product> product = productRepository.find(productId);
+        Optional<Product> maybeProduct = productRepository.find(productId);
 
-        if(product.isEmpty()){
+        if(maybeProduct.isEmpty()){
             return new ProductNotFound(productId);
         }
 
-        return null;
+        Optional<Brand> maybeBrand = brandRepository.find(brandId);
+
+        if(maybeBrand.isEmpty()){
+            return new BrandNotFound(brandId);
+        }
+
+        Product product = maybeProduct.get();
+        Brand brand = maybeBrand.get();
+
+        Optional<Price> maybePrice = pricesRepository.findOneWithHighestPriority(liveDate, product, brand);
+
+        if(maybePrice.isEmpty()){
+            return new PriceNotFound(liveDate, product, brand);
+        }
+
+        return new Success(maybePrice.get());
     }
+
+    public FindPriceResults fastFind(LocalDateTime liveDate, Long productId, Long brandId) {
+
+        Optional<Price> maybePrice = pricesRepository.fastFindOneWithHighestPriority(liveDate, productId, brandId);
+
+        if(maybePrice.isEmpty()){
+            return new FastPriceNotFound(liveDate, productId, brandId);
+        }
+
+        return new Success(maybePrice.get());
+    }
+
+
 }
