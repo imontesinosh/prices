@@ -7,6 +7,7 @@ import com.demo.prices.port.out.BrandRepository;
 import com.demo.prices.port.out.PricesRepository;
 import com.demo.prices.port.out.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import static com.demo.prices.domain.services.FindPriceResults.*;
 
 @RequiredArgsConstructor
+@Service
 public class FindPrice {
 
     private final ProductRepository productRepository;
@@ -45,6 +47,7 @@ public class FindPrice {
         return new Success(maybePrice.get());
     }
 
+    //This one makes 2 database trips less than the other method, bit at the cost of not knowing why the search failed
     public FindPriceResults fastFind(LocalDateTime liveDate, Long productId, Long brandId) {
 
         Optional<Price> maybePrice = pricesRepository.fastFindOneWithHighestPriority(liveDate, productId, brandId);

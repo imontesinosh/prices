@@ -9,7 +9,6 @@ import com.demo.prices.port.out.PricesRepository;
 import com.demo.prices.port.out.ProductRepository;
 import com.demo.prices.domain.services.FindPriceResults.*;
 import org.javamoney.moneta.Money;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -71,7 +70,7 @@ public class FindPriceTest {
         verify(brandRepository).find(BRAND_ID);
 
         assertThat(result).isInstanceOf(BrandNotFound.class);
-        assertThat( ((BrandNotFound)result).productId() ).isEqualTo(BRAND_ID);
+        assertThat( ((BrandNotFound)result).brandId() ).isEqualTo(BRAND_ID);
 
     }
 

@@ -6,11 +6,13 @@ import com.demo.prices.domain.Price;
 import com.demo.prices.domain.PriceList;
 import com.demo.prices.domain.Product;
 import org.javamoney.moneta.Money;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PriceEntityToDomainMapper {
     public Price map(PricesJpaEntity it) {
         return new Price(
-                new Brand(it.getPriceId()),
+                new Brand(it.getBrandId()),
                 new Product(it.getProductId()),
                 new PriceList(it.getPriceList()),
                 it.getStartDate(),
