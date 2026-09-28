@@ -3,9 +3,9 @@ package com.demo.prices.domain.services;
 import com.demo.prices.domain.Brand;
 import com.demo.prices.domain.Price;
 import com.demo.prices.domain.Product;
-import com.demo.prices.domain.repository.BrandRepository;
-import com.demo.prices.domain.repository.PricesRepository;
-import com.demo.prices.domain.repository.ProductRepository;
+import com.demo.prices.port.out.BrandRepository;
+import com.demo.prices.port.out.PricesRepository;
+import com.demo.prices.port.out.ProductRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;

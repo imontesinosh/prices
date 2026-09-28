@@ -2,11 +2,14 @@ package com.demo.prices.domain.services;
 
 import com.demo.prices.domain.Brand;
 import com.demo.prices.domain.Price;
+import com.demo.prices.domain.PriceList;
 import com.demo.prices.domain.Product;
-import com.demo.prices.domain.repository.BrandRepository;
-import com.demo.prices.domain.repository.PricesRepository;
-import com.demo.prices.domain.repository.ProductRepository;
+import com.demo.prices.port.out.BrandRepository;
+import com.demo.prices.port.out.PricesRepository;
+import com.demo.prices.port.out.ProductRepository;
 import com.demo.prices.domain.services.FindPriceResults.*;
+import org.javamoney.moneta.Money;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -98,7 +101,8 @@ public class FindPriceTest {
 
         when(productRepository.find(eq(PRODUCT_ID))).thenReturn(Optional.of(new Product(PRODUCT_ID)));
         when(brandRepository.find(eq(BRAND_ID))).thenReturn(Optional.of(new Brand(BRAND_ID)));
-        when(pricesRepository.findOneWithHighestPriority(any(LocalDateTime.class), any(Product.class), any(Brand.class))).thenReturn(Optional.of(new Price()));
+        Price value = tenEuros();
+        when(pricesRepository.findOneWithHighestPriority(any(LocalDateTime.class), any(Product.class), any(Brand.class))).thenReturn(Optional.of(value));
 
         FindPriceResults result = findPrice.find(LIVE_DATE, PRODUCT_ID, BRAND_ID);
 
@@ -108,6 +112,10 @@ public class FindPriceTest {
 
         assertThat(result).isInstanceOf(Success.class);
 
+    }
+
+    private static Price tenEuros() {
+        return new Price(new Brand(BRAND_ID), new Product(PRODUCT_ID), new PriceList(2L), LocalDateTime.of(1970, 1, 1, 0, 0), LocalDateTime.of(9999, 12, 31, 0, 0), 999L, Money.of(10, "EUR"));
     }
 
     @Test
@@ -133,7 +141,7 @@ public class FindPriceTest {
     void shouldSucceedWhenFastSearching(){
         assertThat(findPrice).isNotNull();
 
-        when(pricesRepository.fastFindOneWithHighestPriority(any(LocalDateTime.class), any(Long.class), any(Long.class))).thenReturn(Optional.of(new Price()));
+        when(pricesRepository.fastFindOneWithHighestPriority(any(LocalDateTime.class), any(Long.class), any(Long.class))).thenReturn(Optional.of(tenEuros()));
 
         FindPriceResults result = findPrice.fastFind(LIVE_DATE, PRODUCT_ID, BRAND_ID);
 
