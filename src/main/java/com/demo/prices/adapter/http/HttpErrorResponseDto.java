@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 public class HttpErrorResponseDto {
 
+    private String code;
+
     private String message;
 
 }

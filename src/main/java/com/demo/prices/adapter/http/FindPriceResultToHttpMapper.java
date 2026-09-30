@@ -15,10 +15,10 @@ public class FindPriceResultToHttpMapper {
 
     public ResponseEntity<?> toHttpResponse(FindPriceResults results){
         return switch(results){
-            case ProductNotFound it -> ResponseEntity.badRequest().body(new HttpErrorResponseDto("The product " + it.productId() + "was not found"));
-            case BrandNotFound it -> ResponseEntity.badRequest().body(new HttpErrorResponseDto("The brand " + it.brandId() + "was not found"));
-            case PriceNotFound it -> ResponseEntity.badRequest().body(new HttpErrorResponseDto("There is no price for the requested product " + it.product().getId() + " and brand " + it.brand().getId()));
-            case FastPriceNotFound it -> ResponseEntity.badRequest().body(new HttpErrorResponseDto("There is no price for the requested product "  + it.productId() + " and brand " + it.brandId()));
+            case ProductNotFound it -> ResponseEntity.badRequest().body(new HttpErrorResponseDto("PRICE-001", "The product " + it.productId() + " was not found"));
+            case BrandNotFound it -> ResponseEntity.badRequest().body(new HttpErrorResponseDto("PRICE-002","The brand " + it.brandId() + " was not found"));
+            case PriceNotFound it -> ResponseEntity.badRequest().body(new HttpErrorResponseDto("PRICE-003","There is no price for the requested product " + it.product().getId() + " and brand " + it.brand().getId()));
+            case FastPriceNotFound it -> ResponseEntity.badRequest().body(new HttpErrorResponseDto("PRICE-003","There is no price for the requested product "  + it.productId() + " and brand " + it.brandId()));
             case Success it -> ResponseEntity.ok().body(priceDomainToHttpMapper.map(it.price()));
         };
     }

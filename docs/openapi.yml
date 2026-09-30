@@ -1,0 +1,111 @@
+openapi: 3.2.0
+info:
+  title: Code Test - Prices - OpenAPI 3.2
+  description: |-
+    Open API for the single GET endpoint on the test
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0-SNAPSHOT
+servers:
+  - url: http://localhost:8080
+    description: Local deployment
+tags:
+  - name: Prices
+    summary: Price for a given product at a given time
+    description: Price for a given product at a given time
+paths:
+  /api/v1/prices:
+    get:
+      tags:
+        - Prices
+      summary: Finds a price for a live date, product, and brand
+      description: Finds a price for a live date, product, and brand
+      operationId: findPrice
+      parameters:
+        - name: liveDate
+          in: query
+          description: The date time that applies for the price
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: productId
+          in: query
+          description: The product id to search
+          required: true
+          schema:
+            type: integer
+        - name: brandId
+          in: query
+          description: The brand id to search
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Price'
+        '400':
+          description: |
+            Invalid search:              
+            - PRICE-001: The product does not exists
+            - PRICE-002: The brand does not exists
+            - PRICE-003: There is no price for the requested product, brand, and liveDate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Unexpected error
+components:
+  schemas:
+    Price:
+      type: object
+      properties:
+        product_id:
+          type: integer
+          format: int64
+          examples: [10]
+        brand_id:
+          type: integer
+          format: int64
+          examples: [10]
+        price_list:
+          type: integer
+          format: int64
+          examples: [10]
+        valid_from:
+          type: date
+          format: date-time
+          examples: 2020-06-16T21:00:00Z
+        valid_to:
+          type: date
+          format: date-time
+          examples: 2020-06-16T21:00:00Z
+        amount:
+          $ref: '#/components/schemas/Amount'
+    Amount:
+      type: object
+      properties:
+        value:
+          type: number
+          format: double
+          examples: [29.95]
+        currency:
+          type: String
+          examples: [EUR]
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+

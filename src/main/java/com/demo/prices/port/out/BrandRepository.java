@@ -10,6 +10,10 @@ import java.util.Optional;
 public class BrandRepository {
     public Optional<Brand> find(Long brandId) {
         // in the real world we should have a lookup in a db table
+        //instead, we're going to mock that
+        if(brandId > 100){
+            return Optional.empty();
+        }
         return Optional.of(new Brand(brandId));
     }
 }

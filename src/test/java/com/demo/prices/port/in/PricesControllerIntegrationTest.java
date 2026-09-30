@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -145,5 +146,48 @@ public class PricesControllerIntegrationTest {
                 .andExpect(hasCurrency("EUR"))
                 .andExpect(hasAmount("38.95"));
     }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|',
+            value = {
+                    "17    | 1   | 2020-06-14T16:00:00Z | PRICE-001 | The product 17 was not found",
+                    "35455 | 101 | 2020-06-14T16:00:00Z | PRICE-002 | The brand 101 was not found",
+                    "35455 | 1   | 1970-01-01T16:00:00Z | PRICE-003 | There is no price for the requested product 35455 and brand 1",
+            }
+    )
+    void shouldReturnAnErrorWhenThereAreProblems(String productId, String brandId, String liveDate, String errorCode, String errorMessage) throws Exception{
+        assertThat(pricesJpaRepository).isNotNull();
+        mockMvc.perform(get("/api/v1/prices")
+                        .queryParam("liveDate", liveDate)
+                        .queryParam("productId", productId)
+                        .queryParam("brandId", brandId))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(errorCode))
+                .andExpect(jsonPath("$.message").value(errorMessage))
+                ;
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|',
+            value = {
+                    "17    | 1   | 2020-06-14T16:00:00Z | PRICE-003 | There is no price for the requested product 17 and brand 1",
+                    "35455 | 101 | 2020-06-14T16:00:00Z | PRICE-003 | There is no price for the requested product 35455 and brand 101",
+                    "35455 | 1   | 1970-01-01T16:00:00Z | PRICE-003 | There is no price for the requested product 35455 and brand 1",
+            }
+    )
+    void fastPriceShouldReturnAnErrorWhenTheAreProblems(String productId, String brandId, String liveDate, String errorCode, String errorMessage) throws Exception{
+        assertThat(pricesJpaRepository).isNotNull();
+        mockMvc.perform(get("/api/v1/fast-prices")
+                        .queryParam("liveDate", liveDate)
+                        .queryParam("productId", productId)
+                        .queryParam("brandId", brandId))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(errorCode))
+                .andExpect(jsonPath("$.message").value(errorMessage))
+        ;
+    }
+
 
 }
